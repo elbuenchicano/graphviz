@@ -146,11 +146,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="GraphViz.h" />
+    <ClCompile Include="graph.cpp" />
+    <ClCompile Include="src\GraphViz.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="graph.cpp" />
-    <ClCompile Include="GraphViz.cpp" />
+    <ClInclude Include="src\GraphViz.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

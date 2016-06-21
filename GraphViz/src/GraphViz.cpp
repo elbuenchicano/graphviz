@@ -1,0 +1,203 @@
+#include "GraphViz.h"
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+namespace graphViz {
+
+  void VProperties::addProp(strT prop, strT content) {
+    props_.push_back(propT(prop, content));
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  void VProperties::addProp(propT prop) {
+    props_.push_back(prop);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  void VProperties::addProp(lstProp & lprop) {
+    props_.insert(props_.end(), lprop.begin(), lprop.end());
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  void VProperties::addProp(const lstProp & lprop) {
+    props_.insert(props_.end(), lprop.begin(), lprop.end());
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //VProperties & VProperties::operator = (VProperties & in) {
+  //  props_ = in.props_;
+  //  return *this;
+  //}
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties & VProperties::operator = (const VProperties & in) {
+    props_ = in.props_;
+    return *this;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties & VProperties::operator + (VProperties & in) {
+    props_.insert(props_.end(), (*in).begin(), (*in).end());
+    return *this;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  lstProp & VProperties::operator * () {
+    return props_;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  strT VProperties::str() {
+    strT ans = "[";
+    for (auto &iter : props_)
+      ans += iter.first + " =\"" + iter.second + "\", ";
+    return ans + "]";
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  strT VProperties::strSingle() {
+    strT ans = "";
+    for (auto &iter : props_)
+      ans += iter.first + " =\"" + iter.second + "\";\n";
+    return ans;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties::VProperties(strT pro, strT con) {
+    addProp(pro, con);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties::VProperties(lstProp & pro) {
+    addProp(pro);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties::VProperties(propT & pro) {
+    addProp(pro);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VProperties::VProperties(VProperties & pro) {
+    addProp(*pro);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  //CLASS VNODE
+  VNode::VNode(strT id, VProperties &props) :
+    id_(id),
+    props_(props){
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VNode::VNode(strT id, strT pro, strT con) :
+    id_(id){
+    props_.addProp(pro, con);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VNode::VNode(strT id) :
+    id_(id) { }
+  //////////////////////////////////////////////////////////////////////////////
+  strT VNode::str() {
+    strT out = "node " + props_.str() + "; " + id_ + ";\n";
+    return out;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  strT VNode::getId() {
+    return id_;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  //CLASS VEDGE
+  VEdge::VEdge(strT in, strT out, VProperties &props) :
+    id_in_(in),
+    id_out_(out),
+    props_(props) {
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VEdge::VEdge(strT in, strT out, strT pro, strT con) :
+    id_in_(in),
+    id_out_(out) {
+    props_.addProp(pro, con);
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VEdge::VEdge(strT in, strT out) :
+    id_in_(in),
+    id_out_(out) { }
+  //////////////////////////////////////////////////////////////////////////////
+  VEdge::VEdge(VEdge &&ed) { 
+    id_in_  = ed.id_in_;
+    id_out_ = ed.id_out_;
+    props_  = ed.props_;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VEdge::VEdge(const VEdge &ed) {
+    id_in_  = ed.id_in_;
+    id_out_ = ed.id_out_;
+    props_  = ed.props_;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  strT VEdge::str(bool type) {
+    strT out = id_in_ + (type?" -- ":" -> ") + id_out_ + " " + props_.str() + 
+               ";\n";
+    return out;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VEdge & VEdge::operator = (VEdge & ed) {
+    id_in_  = ed.id_in_;
+    id_out_ = ed.id_out_;
+    props_  = ed.props_;
+    return *this;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  //CLASS VGRAPH
+  VGraph::VGraph(strT id, bool t) :
+    id_(id){
+    type_ = t;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VGraph::VGraph(strT id, VProperties &props, bool t) :
+    id_(id),
+    props_(props){
+    type_ = t;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  VGraph::VGraph(strT id, strT pro, strT con, bool t) :
+    id_(id) {
+    props_.addProp(pro, con);
+    type_ = t;
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  bool VGraph::addNode(VNode & node) {
+    if (nodes_.find(node.getId()) == nodes_.end()) {
+      nodes_.insert(pStrNode(node.getId(), node));
+      return true;
+    }
+    return false;
+  }
+  ////////////////////////////////////////////////////////////////////////////////
+  bool VGraph::addEdge(VEdge & edge){
+    if (nodes_.find(edge.id_in_)   == nodes_.end() || 
+        nodes_.find(edge.id_out_)  == nodes_.end())
+      return false;
+      edges_.push_back(edge);
+    return true;
+  }
+  ////////////////////////////////////////////////////////////////////////////////
+  strT VGraph::str(){
+    std::stringstream output;
+
+    //............................................................................
+    //graph properties 
+    
+    output << (type_ ? "graph " : "digraph ") << " " << id_ << " {\n";
+    output << props_.strSingle();
+
+    //............................................................................
+    //insert nodes
+    for (auto & item : nodes_) {
+      output << item.second.str();
+    }
+    //............................................................................
+    //insert edges
+
+    for (auto & item : edges_) {
+      output << item.str(type_);
+    }
+    //............................................................................
+    output << "}";
+    //function end
+    return  output.str();
+  }
+
+}
